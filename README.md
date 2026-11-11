@@ -89,22 +89,17 @@ Using the cookies method, Google Accounts are configured using the `"googleAuth"
       },
 ```
 
-The values of `"issueToken"` and `"cookies"` are specific to your Google Account. To get them, follow these steps (only needs to be done once, as long as you stay logged into your Google Account).
+The values of `"issueToken"` and `"cookies"` are specific to your Google Account. Capture them in a fresh Safari or Firefox private window, then close that window without signing out. Chrome and Edge can create device-bound sessions whose copied cookies stop working within hours. An active browser using the same session can also compete with Homebridge's cookie rotation. [Nest Legacy documents this behavior](https://github.com/tronikos/nest_legacy#option-a-google-account).
 
-### Chrome
+This fork saves Google's rotated cookies in Homebridge's storage directory and restores them on restart. Google can still revoke a session, requiring a fresh sign-in. Fresh `issueToken` and `cookies` settings start a new cache.
 
-1. Open a Chrome browser tab in Incognito Mode (or clear your cache).
-2. Open Developer Tools (View/Developer/Developer Tools).
-3. Click on 'Network' tab. Make sure 'Preserve Log' is checked.
-4. In the 'Filter' box, enter `issueToken`.
-5. Go to `home.nest.com` then click the "eye" icon in top right of the address bar and click the toggle for "Third-party cookies".
-6. Click 'Sign in with Google'. Log into your account.
-7. One network call (beginning with `iframerpc`) will appear in the Dev Tools window. Click on it.
-8. In the Headers tab, under General, copy the entire `Request URL` (beginning with `https://accounts.google.com`). This is your `"issueToken"` in `config.json`.
-9. In the 'Filter' box, enter `oauth2/iframe`
-10. Several network calls will appear in the Dev Tools window. Click on the last `iframe` call.
-11. In the Headers tab, under Request Headers, copy the entire `cookie` (**include the whole string which is several lines long and has many field/value pairs** - do not include the `cookie:` name). This is your `"cookies"` in `config.json`.
-12. Do not log out of `home.nest.com`, as this will invalidate your credentials. Just close the browser tab.
+### Firefox
+
+1. Open a new private window and Developer Tools > Network.
+2. Enable Persist Logs, then sign in at `home.nest.com`. If sign-in loops, allow tracking for the site using Firefox's shield icon.
+3. Filter for `issueToken` and select the `iframerpc` request.
+4. Use Copy Value to copy its full request URL and full request Cookie header into `googleAuth.issueToken` and `googleAuth.cookies`.
+5. Close the private window without signing out.
 
 ### Safari
 
@@ -117,12 +112,11 @@ The values of `"issueToken"` and `"cookies"` are specific to your Google Account
 7. Under Headers > Summary, copy the URL (beginning with `https://accounts.google.com`). This is your `"issueToken"` in `config.json`.
 <img width="762" alt="Screenshot 2024-10-30 at 09 14 38" src="https://github.com/user-attachments/assets/0e65b5a3-018a-4ca0-8bac-e3c4c52016a0">
 
-8. In the 'Filter' box, enter `oauth2/iframe`
-9. Several network calls will appear in the Dev Tools window. Click on the most recent (usually top-most) `iframe` call.
-10. Under Headers > Request, copy the entire `cookie` (**include the whole string which is several lines long and has many field/value pairs** - do not include the `cookie: ` name). This is your `"cookies"` in `config.json`.
+8. Keep the `iframerpc` request selected.
+9. Under Headers > Request, copy the entire `cookie` (**include the whole string which is several lines long and has many field/value pairs** - do not include the `cookie: ` name). This is your `"cookies"` in `config.json`.
 <img width="762" alt="Screenshot 2024-10-30 at 09 22 15" src="https://github.com/user-attachments/assets/c802201b-463c-4e78-9fa9-f2ed4f60fffe">
 
-11. Do not log out of `home.nest.com`, as this will invalidate your credentials. Just close the browser tab.
+10. Close the private window without signing out.
 
 # HomeKit Accessory Types
 

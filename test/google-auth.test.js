@@ -6,6 +6,8 @@ const http = require('node:http');
 const os = require('node:os');
 const path = require('node:path');
 const { test } = require('node:test');
+const { Console } = require('node:console');
+const { PassThrough } = require('node:stream');
 
 const GoogleAuth = require('../lib/google-auth');
 const NestConnection = require('../lib/nest-connection');
@@ -84,4 +86,45 @@ test('concurrent Nest authentication calls share one Google exchange', async t =
     assert.equal(requests, 1);
     assert.equal(await connection.auth(), false);
     assert.equal(requests, 2);
+});
+
+test('reports Google session rejection safely and clears the expired Nest session', async t => {
+    const output = new PassThrough();
+    const logger = new Console({ stdout: output, stderr: output });
+    const issueToken = await listen(t, (_request, response) => {
+        response.writeHead(200, {
+            'Content-Type': 'application/json',
+            'Set-Cookie': 'SIDCC=; Max-Age=0'
+        });
+        response.end(JSON.stringify({ error: 'USER_LOGGED_OUT', detail: 'private-response-detail' }));
+    });
+    const connection = new NestConnection({ googleAuth: { issueToken, cookies: 'SID=private-cookie; SIDCC=original' } }, logger, false, false);
+    connection.connected = true;
+    connection.token = 'expired-nest-session';
+    connection.config.access_token = 'expired-nest-jwt';
+
+    assert.equal(await connection.auth(true), false);
+    assert.equal(connection.connected, false);
+    assert.equal(connection.token, null);
+    assert.equal(connection.config.access_token, undefined);
+    assert.equal(connection.googleAuth.cookies, 'SID=private-cookie; SIDCC=original');
+    const messages = output.read(output.readableLength).toString();
+    assert.match(messages, /Google token exchange rejected \(code USER_LOGGED_OUT\)/);
+    assert.match(messages, /Safari or Firefox private window/);
+    assert.doesNotMatch(messages, /private-cookie|private-response-detail|expired-nest/);
+});
+
+test('does not log arbitrary Google error response contents', async t => {
+    const output = new PassThrough();
+    const logger = new Console({ stdout: output, stderr: output });
+    const issueToken = await listen(t, (_request, response) => {
+        response.writeHead(200, { 'Content-Type': 'application/json' });
+        response.end(JSON.stringify({ error: 'SID=private-cookie-value' }));
+    });
+    const connection = new NestConnection({ googleAuth: { issueToken, cookies: 'SID=private-cookie' } }, logger, false, false);
+
+    assert.equal(await connection.auth(), false);
+    const messages = output.read(output.readableLength).toString();
+    assert.match(messages, /INVALID_GOOGLE_RESPONSE/);
+    assert.doesNotMatch(messages, /private-cookie/);
 });
