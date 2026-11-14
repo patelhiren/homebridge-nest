@@ -89,6 +89,24 @@ Using the cookies method, Google Accounts are configured using the `"googleAuth"
       },
 ```
 
+The plugin retains rotated Google cookies and restores them after restart, using
+Node.js 16 or newer. Existing settings and plaintext caches remain compatible;
+caches migrate to JSON after a successful exchange. New cookie updates preserve
+their scope and expiry. Fresh configured credentials select a new cache.
+
+`nest-google-cookies-<session hash>` files in Homebridge storage contain Google
+session credentials. Protect them and their backups like `config.json`, and
+exclude them from support uploads. POSIX permissions are restricted to `0600`;
+on Windows, restrict the storage directory using filesystem ACLs.
+
+After a successful refresh and save, unused caches are retired using the complete
+Homebridge configuration; other configured Nest sessions are preserved. If that
+configuration is unreadable, cleanup is skipped. Each Homebridge installation
+should have its own storage directory. After removing the last Nest platform,
+manually delete its remaining caches. This does not revoke the Google session.
+Older plugin builds cannot read JSON caches: remove the affected cache before
+rolling back, and capture fresh credentials if the configured ones have expired.
+
 The values of `"issueToken"` and `"cookies"` are specific to your Google Account. To get them, follow these steps (only needs to be done once, as long as you stay logged into your Google Account).
 
 ### Chrome

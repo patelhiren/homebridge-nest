@@ -150,7 +150,9 @@ class NestPlatform {
             throw('When using googleAuth, you must provide issueToken and cookies in config.json. Please see README.md for instructions');
         }
 
-        const conn = new NestConnection(this.config, this.log, verbose, fieldTestMode);
+        const storagePath = this.config.googleAuth && this.api.user.storagePath();
+        const configPath = storagePath && typeof this.api.user.configPath === 'function' ? this.api.user.configPath() : undefined;
+        const conn = new NestConnection(this.config, this.log, verbose, fieldTestMode, storagePath, configPath);
 
         if (await conn.auth()) {
             return conn;

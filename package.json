@@ -14,9 +14,10 @@
   ],
   "engines": {
     "homebridge": ">=0.2.5 || ^2.0.0-beta.0",
-    "node": ">=7.0.0"
+    "node": ">=16.0.0"
   },
   "scripts": {
+    "test": "node --test test/*.test.js",
     "lint": "eslint .",
     "prepublishOnly": "npm run lint",
     "preversion": "npm run lint"
@@ -27,6 +28,7 @@
     "promise-prompt": "^1.1.1",
     "promise.prototype.finally": "^3.1.8",
     "protobufjs": "^7.4.0",
+    "tough-cookie": "^6.1.0",
     "varint": "^6.0.0"
   },
   "devDependencies": {
